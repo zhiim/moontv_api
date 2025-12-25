@@ -223,7 +223,7 @@
     },
     "apilj.com": {
       "name": "🔞辣椒资源",
-      "api": "https://apilj.com/api.php/provide/vod",
+      "api": "https://pz.168188.dpdns.org/?url=https://apilj.com/api.php/provide/vod",
       "detail": "https://apilj.com"
     },
     "shayuapi.com": {
@@ -265,6 +265,11 @@
       "name": "🔞精品资源",
       "api": "https://www.jingpinx.com/api.php/provide/vod",
       "detail": "https://www.jingpinx.com"
+    },
+    "souavzyw.com": {
+      "name": "🔞souavZY",
+      "api": "https://api.souavzyw.net/api.php/provide/vod",
+      "detail": "souavzyw.com"
     }
   }
 }

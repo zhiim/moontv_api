@@ -301,7 +301,7 @@
     },
     "apilj.com": {
       "name": "🔞辣椒资源",
-      "api": "https://apilj.com/api.php/provide/vod",
+      "api": "https://pz.168188.dpdns.org/?url=https://apilj.com/api.php/provide/vod",
       "detail": "https://apilj.com"
     },
     "shayuapi.com": {
@@ -334,7 +334,6 @@
       "api": "https://api.bwzyz.com/api.php/provide/vod",
       "detail": "https://api.bwzym3u8.com"
     },
-
     "thzy8.me": {
       "name": "🔞桃花资源",
       "api": "https://thzy1.me/api.php/provide/vod",
@@ -351,11 +350,10 @@
       "api": "https://ckzy.me/api.php/provide/vod",
       "detail": "https://ckzy.me"
     },
-    "api.souavzy.vip": {
-      "_comment": "HTTP 502",
+    "souavzyw.com": {
       "name": "🔞souavZY",
-      "api": "https://api.souavzy.vip/api.php/provide/vod",
-      "detail": "https://api.souavzy.vip"
+      "api": "https://api.souavzyw.net/api.php/provide/vod",
+      "detail": "souavzyw.com"
     },
     "www.xxibaozyw.com": {
       "_comment": "无搜索结果",
