@@ -1,0 +1,46 @@
+name: Sync Upstream Config
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "0 20 * * *" # every day UTC 20
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout This Repo
+        uses: actions/checkout@v4
+
+      - name: Replace JSON Config with Upstream
+        run: |
+          rm -f LunaTV-config.json
+          curl -fsSL https://raw.githubusercontent.com/hafrey1/LunaTV-config/main/LunaTV-config.json -o LunaTV-config.json || {
+            echo "❌ 下载上游配置失败"
+            exit 1
+          }
+
+      - name: Check for changes
+        run: |
+          git add LunaTV-config.json
+          git diff --cached --quiet || echo "changed=true" >> $GITHUB_ENV
+
+      - name: Commit and push
+        if: env.changed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin main
+          git reset --soft origin/main
+
+          git commit -m "自动同步上游 JSON 配置 ($(date -d '+8 hour' +'%Y-%m-%d %H:%M:%S CST'))" || echo "⚠️ 没有文件变化可提交"
+
+          git push origin main
+
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 0
+          keep_minimum_runs: 5

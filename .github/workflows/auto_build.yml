@@ -1,0 +1,68 @@
+name: JSON Build, API Check & Encoding
+
+on:
+  push:
+    paths:
+      - "LunaTV-config.json"
+  workflow_dispatch:
+
+jobs:
+  build-check-encode:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Generate jingjian.json (strip _comment)
+        run: |
+          jq '{
+            cache_time: .cache_time,
+            api_site: (
+              .api_site
+              | with_entries(select(.value._comment | not))
+            )
+          }' LunaTV-config.json > jingjian.json
+          jq empty jingjian.json
+
+      - name: Generate jin18.json (strip adult resources)
+        run: |
+          jq '{
+            cache_time: .cache_time,
+            api_site: (
+              .api_site
+              | with_entries(select(.value.name | startswith("🔞") | not))
+            )
+          }' jingjian.json > jin18.json
+          jq empty jin18.json
+
+      - name: Check for changes
+        run: |
+          git add jingjian.json jin18.json
+          git diff --cached --quiet || echo "changed=true" >> $GITHUB_ENV
+
+      - name: Commit and push all generated files
+        if: env.changed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin main
+          git reset --soft origin/main
+
+          git commit -m "自动更新 JSON ($(date -d '+8 hour' +'%Y-%m-%d %H:%M:%S CST'))" || echo "⚠️ 没有文件变化可提交"
+
+          git push origin main
+
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 0
+          keep_minimum_runs: 5
