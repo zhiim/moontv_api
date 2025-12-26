@@ -15,7 +15,7 @@ const SOURCE_FILES = {
 const cache = new Map();
 const CACHE_TTL = 10 * 60 * 1000; // 10分钟缓存
 
-setInterval(() => {
+const cacheCleanupInterval = setInterval(() => {
     const now = Date.now();
     for (const [key, value] of cache) {
         if (now - value.time > CACHE_TTL) cache.delete(key);
@@ -342,3 +342,14 @@ app.listen(PORT, () => {
     console.log(`数据源目录: ${__dirname}`);
 });
 
+process.on('SIGTERM', () => {
+    clearInterval(cacheCleanupInterval);
+    console.log('清理完成，进程退出');
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    clearInterval(cacheCleanupInterval);
+    console.log('清理完成，进程退出');
+    process.exit(0);
+});
