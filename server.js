@@ -1,18 +1,26 @@
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
-const fs = require('fs');
-const path = require('path');
+const bs58 = require('bs58');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 映射 source 参数到本地文件名
 const SOURCE_FILES = {
-    'jin18': 'jin18.json',
-    'jingjian': 'jingjian.json',
-    'full': 'LunaTV-config.json' // 默认完整版
+    'jin18': 'https://raw.githubusercontent.com/zhiim/moontv_api/main/jin18.json',
+    'jingjian': 'https://raw.githubusercontent.com/zhiim/moontv_api/main/jingjian.json',
+    'full': 'https://raw.githubusercontent.com/zhiim/moontv_api/main/LunaTV-config.json'
 };
+
+const cache = new Map();
+const CACHE_TTL = 10 * 60 * 1000; // 10分钟缓存
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of cache) {
+        if (now - value.time > CACHE_TTL) cache.delete(key);
+    }
+}, CACHE_TTL);
 
 const FORMAT_CONFIG = {
     '0': { proxy: false, base58: false }, 'raw': { proxy: false, base58: false },
@@ -26,25 +34,17 @@ const EXCLUDE_HEADERS = new Set([
     'connection', 'keep-alive', 'set-cookie', 'set-cookie2', 'host'
 ]);
 
-const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
 // Base58 编码
 function base58Encode(obj) {
-    const str = JSON.stringify(obj);
-    const bytes = new TextEncoder().encode(str); // 需要 Node 11+ 全局 TextEncoder 或 polyfill
-    let intVal = 0n;
-    for (let b of bytes) intVal = (intVal << 8n) + BigInt(b);
-    let result = '';
-    while (intVal > 0n) {
-        const mod = intVal % 58n;
-        result = BASE58_ALPHABET[Number(mod)] + result;
-        intVal = intVal / 58n;
+    try {
+        const str = JSON.stringify(obj);
+        const bytes = Buffer.from(str); // Node.js 原生 Buffer
+        return bs58.encode(bytes);
+    } catch (e) {
+        console.error("Base58 Encode Error:", e);
+        return "";
     }
-    for (let b of bytes) {
-        if (b === 0) result = BASE58_ALPHABET[0] + result;
-        else break;
-    }
-    return result;
 }
 
 // 递归前缀替换
@@ -66,24 +66,48 @@ function addOrReplacePrefix(obj, newPrefix) {
     return newObj;
 }
 
-// 读取本地 JSON 文件
-function getLocalJSON(sourceKey) {
-    const fileName = SOURCE_FILES[sourceKey] || SOURCE_FILES['full'];
-    const filePath = path.join(__dirname, fileName);
+async function getRemoteJSON(sourceKey) {
+    const url = SOURCE_FILES[sourceKey] || SOURCE_FILES['full'];
+    const now = Date.now();
+    
+    // 检查缓存
+    const cached = cache.get(sourceKey);
+    if (cached && (now - cached.time < CACHE_TTL)) {
+        return cached.data;
+    }
 
-    return new Promise((resolve, reject) => {
-        fs.readFile(filePath, 'utf8', (err, data) => {
-            if (err) {
-                console.error(`Error reading file ${fileName}:`, err);
-                return reject(new Error('Source file not found or unreadable'));
-            }
-            try {
-                resolve(JSON.parse(data));
-            } catch (e) {
-                reject(new Error('Invalid JSON in source file'));
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Node.js CORS Proxy',
+                'Accept': 'application/json'
             }
         });
-    });
+
+        clearTimeout(timeout);
+        
+        if (!response.ok) {
+            throw new Error(`GitHub 返回 ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // 更新缓存
+        cache.set(sourceKey, { data, time: now });
+        
+        return data;
+    } catch (err) {
+        // 如果请求失败但有旧缓存，返回旧缓存
+        if (cached) {
+            console.warn(`GitHub 请求失败，使用缓存: ${err.message}`);
+            return cached.data;
+        }
+        throw new Error(`无法获取配置文件: ${err.message}`);
+    }
 }
 
 
@@ -109,6 +133,11 @@ app.all('/', async (req, res) => {
         // --- A. 代理模式 ---
         if (targetUrl) {
             // 1. 安全检查
+            const isLocal = /^(https?:\/\/)(127\.|localhost|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|::1)/i.test(targetUrl);
+            if (isLocal) {
+                return res.status(403).json({ error: 'Access to local resources is forbidden' });
+            }
+
             if (!/^https?:\/\//i.test(targetUrl)) {
                 return res.status(400).json({ error: 'Invalid URL' });
             }
@@ -168,13 +197,16 @@ app.all('/', async (req, res) => {
 
         // --- B. 配置转换模式 ---
         if (format) {
+            if (!SOURCE_FILES[source]) {
+                return res.status(400).json({ error: 'Invalid source parameter' });
+            }
+            
             const config = FORMAT_CONFIG[format];
             if (!config) {
                 return res.status(400).json({ error: 'Invalid format parameter' });
             }
 
-            // 读取本地文件 (代替 getCachedJSON)
-            const rawData = await getLocalJSON(source);
+            const rawData = await getRemoteJSON(source);
             
             // 处理前缀
             const newData = config.proxy
@@ -198,7 +230,7 @@ app.all('/', async (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API 中转代理服务 (VPS版)</title>
+  <title>API 中转代理服务</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; line-height: 1.6; }
     h1 { color: #333; }
@@ -213,8 +245,8 @@ app.all('/', async (req, res) => {
   </style>
 </head>
 <body>
-  <h1>🔄 API 中转代理服务 <small style="font-size: 0.5em; color: #666">(VPS 私有部署)</small></h1>
-  <p>通用 API 中转代理，用于访问被墙或限制的接口。数据源读取自 VPS 本地文件。</p>
+  <h1>🔄 API 中转代理服务</h1>
+  <p>通用 API 中转代理，用于访问被墙或限制的接口。</p>
   
   <h2>使用方法</h2>
   <p>中转任意 API：在请求 URL 后添加 <code>?url=目标地址</code> 参数</p>
@@ -276,7 +308,6 @@ app.all('/', async (req, res) => {
     <li>✅ 保留原始响应头（除敏感信息）</li>
     <li>✅ 完整的 CORS 支持</li>
     <li>✅ 超时保护（9 秒）</li>
-    <li>✅ 本地文件直接读取（无 GitHub 延迟）</li>
     <li>✅ 支持 Base58 编码输出</li>
   </ul>
   
