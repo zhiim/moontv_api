@@ -1,10 +1,11 @@
-name: Sync Upstream Config
+name: Merget Custom Config
 
 on:
   workflow_dispatch:
 
-  schedule:
-    - cron: "0 20 * * *" # every day UTC 20
+  push:
+    paths:
+      - "custom-config.json"
 
 jobs:
   sync:
@@ -21,14 +22,6 @@ jobs:
 
       - name: Checkout This Repo
         uses: actions/checkout@v4
-
-      - name: Replace JSON Config with Upstream
-        run: |
-          rm -f LunaTV-config.json
-          curl -fsSL https://raw.githubusercontent.com/hafrey1/LunaTV-config/main/LunaTV-config.json -o LunaTV-config.json || {
-            echo "❌ 下载上游配置失败"
-            exit 1
-          }
 
       - name: Generate jingjian.json (strip _comment)
         run: |
@@ -71,7 +64,7 @@ jobs:
           git fetch origin main
           git reset --soft origin/main
 
-          git commit -m "自动同步上游 JSON 配置 ($(date -d '+8 hour' +'%Y-%m-%d %H:%M:%S CST'))" || echo "⚠️ 没有文件变化可提交"
+          git commit -m "融合自定义 JSON 配置 ($(date -d '+8 hour' +'%Y-%m-%d %H:%M:%S CST'))" || echo "⚠️ 没有文件变化可提交"
 
           git push origin main
 
