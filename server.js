@@ -113,14 +113,19 @@ async function getRemoteJSON(sourceKey) {
 
 app.use(cors()); // 启用全域 CORS
 // 解析 Body，用于 POST/PUT 代理
-app.use(express.raw({ type: '*/*', limit: '10mb' }));
+app.use(express.raw({ type: '*/*', limit: '100mb' }));
 
 // 核心处理路由
 app.all('/', async (req, res) => {
-    const targetUrl = req.query.url;
+    let targetUrl = req.query.url;
     const format = req.query.format;
     const source = req.query.source || 'full';
     const prefix = req.query.prefix;
+
+    const urlMatch = req.url.match(/[?&]url=([^&]+(?:&.*)?)/);
+    if (urlMatch) {
+        targetUrl = decodeURIComponent(urlMatch[1]);
+    }
 
     // 获取当前协议和主机名，构建默认前缀
     // 注意：在反向代理(Nginx)后，req.protocol 可能是 http，需要信任代理配置
@@ -353,3 +358,4 @@ process.on('SIGINT', () => {
     console.log('清理完成，进程退出');
     process.exit(0);
 });
+
