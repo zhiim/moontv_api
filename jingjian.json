@@ -143,7 +143,7 @@
     },
     "lovedan.net": {
       "name": "🎬艾旦影视",
-      "api": "https://pz.v88.qzz.io/?url=https://lovedan.net/api.php/provide/vod",
+      "api": "https://lovedan.net/api.php/provide/vod",
       "detail": "https://lovedan.net"
     },
     "91md.me": {
@@ -269,7 +269,7 @@
     "souavzyw.com": {
       "name": "🔞souavZY",
       "api": "https://api.souavzyw.net/api.php/provide/vod",
-      "detail": "souavzyw.com"
+      "detail": "https://api.souavzyw.net"
     }
   }
 }

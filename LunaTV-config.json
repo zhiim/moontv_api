@@ -143,7 +143,7 @@
     },
     "lovedan.net": {
       "name": "🎬艾旦影视",
-      "api": "https://pz.v88.qzz.io/?url=https://lovedan.net/api.php/provide/vod",
+      "api": "https://lovedan.net/api.php/provide/vod",
       "detail": "https://lovedan.net"
     },
     "zy.sh0o.cn": {
@@ -353,7 +353,7 @@
     "souavzyw.com": {
       "name": "🔞souavZY",
       "api": "https://api.souavzyw.net/api.php/provide/vod",
-      "detail": "souavzyw.com"
+      "detail": "https://api.souavzyw.net"
     },
     "www.xxibaozyw.com": {
       "_comment": "无搜索结果",
@@ -388,7 +388,7 @@
     "xingba111.com": {
       "_comment": "403 Forbidden",
       "name": "🔞杏吧资源",
-      "api": "https://pz.168188.dpdns.org/?url=https://xingba222.com/api.php/provide/vod",
+      "api": "https://xingba222.com/api.php/provide/vod",
       "detail": "https://xingba111.com"
     },
     "dadizy11.com": {
