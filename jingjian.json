@@ -98,7 +98,7 @@
     },
     "p2100.net": {
       "name": "🎬飘零资源",
-      "api": "https://p2100.net/api.php/provide/vod",
+      "api": "https://pz.v88.qzz.io/?url=https://p2100.net/api.php/provide/vod",
       "detail": "https://p2100.net"
     },
     "api.ukuapi88.com": {
@@ -145,11 +145,6 @@
       "name": "🔞麻豆视频",
       "api": "https://91md.me/api.php/provide/vod",
       "detail": "https://91md.me"
-    },
-    "lbapiby.com": {
-      "name": "🔞--AIvin-",
-      "api": "http://lbapiby.com/api.php/provide/vod",
-      "detail": "http://lbapiby.com"
     },
     "155zy2.com": {
       "name": "🔞155-资源",
@@ -225,11 +220,6 @@
       "name": "🔞黑料资源",
       "api": "https://www.heiliaozyapi.com/api.php/provide/vod",
       "detail": "https://heiliaozy.cc"
-    },
-    "api.bwzym3u8.com": {
-      "name": "🔞百万资源",
-      "api": "https://api.bwzyz.com/api.php/provide/vod",
-      "detail": "https://api.bwzym3u8.com"
     },
     "thzy8.me": {
       "name": "🔞桃花资源",
